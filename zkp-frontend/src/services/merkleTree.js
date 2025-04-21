@@ -1,4 +1,4 @@
-import { poseidon2 } from 'poseidon-lite';
+import { poseidon1, poseidon2 } from 'poseidon-lite';
 import { LeanIMT } from '@zk-kit/lean-imt';
 
 // Convert a number to a BigInt with proper handling
@@ -51,10 +51,10 @@ export class MerkleTreeService {
       const { key, value } = this.data[i];
       
       // Hash the value
-      const valueHash = poseidon2([value.toString()]);
+      const valueHash = poseidon1([value.toString()]);
       
       // Hash the key
-      const keyHash = poseidon2([key.toString()]);
+      const keyHash = poseidon1([key.toString()]);
       
       // Add key-value pair as adjacent leaves
       leaves.push(valueHash);

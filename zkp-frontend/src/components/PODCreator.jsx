@@ -13,6 +13,7 @@ function PODCreator() {
   
   // State
   const [keyValuePairs, setKeyValuePairs] = useState([{ key: '', value: '' }]);
+  const [jsonInput, setJsonInput] = useState('[\n  { key: 1, value: 111 },\n  { key: 2, value: 222 }\n]');
   const [privateKey, setPrivateKey] = useState('');
   const [generatedPublicKey, setGeneratedPublicKey] = useState(null);
   const [pod, setPod] = useState(null);
@@ -20,29 +21,34 @@ function PODCreator() {
   const [success, setSuccess] = useState('');
   
   /**
-   * Handle changes to key-value pairs
+   * Parse JSON input and update key-value pairs
    */
-  const handleKeyValueChange = (index, field, value) => {
-    const newPairs = [...keyValuePairs];
-    newPairs[index][field] = value;
-    setKeyValuePairs(newPairs);
-  };
-  
-  /**
-   * Add a new key-value pair
-   */
-  const addKeyValuePair = () => {
-    setKeyValuePairs([...keyValuePairs, { key: '', value: '' }]);
-  };
-  
-  /**
-   * Remove a key-value pair
-   */
-  const removeKeyValuePair = (index) => {
-    if (keyValuePairs.length > 1) {
-      const newPairs = [...keyValuePairs];
-      newPairs.splice(index, 1);
-      setKeyValuePairs(newPairs);
+  const parseJsonInput = () => {
+    try {
+      setError('');
+      // Replace single quotes with double quotes and evaluate the JSON
+      const sanitizedJson = jsonInput.replace(/'/g, '"').replace(/(\w+):/g, '"$1":');
+      
+      // Use Function constructor to safely evaluate the JSON string
+      // This handles cases where the input uses JS object syntax (without quotes around keys)
+      const parsedData = (new Function(`return ${sanitizedJson}`))();
+      
+      if (!Array.isArray(parsedData)) {
+        throw new Error('Input must be an array of key-value pairs');
+      }
+      
+      const validPairs = parsedData.map(item => {
+        if (!item.hasOwnProperty('key') || !item.hasOwnProperty('value')) {
+          throw new Error('Each item must have "key" and "value" properties');
+        }
+        return { key: String(item.key), value: String(item.value) };
+      });
+      
+      setKeyValuePairs(validPairs);
+      setSuccess('Key-value pairs parsed successfully');
+      setTimeout(() => setSuccess(''), 3000);
+    } catch (err) {
+      setError(`Failed to parse JSON: ${err.message}`);
     }
   };
   
@@ -91,7 +97,7 @@ function PODCreator() {
       
       // Validate inputs
       const validPairs = keyValuePairs.filter(
-        ({ key, value }) => key.trim() && value.trim()
+        ({ key, value }) => key.toString().trim() && value.toString().trim()
       );
       
       if (validPairs.length === 0) {
@@ -216,41 +222,48 @@ function PODCreator() {
       <div className="bg-white shadow-md rounded p-6 mb-6">
         <h2 className="text-xl font-semibold mb-4">Key-Value Pairs</h2>
         
-        {keyValuePairs.map((pair, index) => (
-          <div key={index} className="flex mb-4">
-            <div className="w-1/3 mr-2">
-              <input
-                type="text"
-                value={pair.key}
-                onChange={(e) => handleKeyValueChange(index, 'key', e.target.value)}
-                placeholder="Key"
-                className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-            <div className="w-1/3 mr-2">
-              <input
-                type="text"
-                value={pair.value}
-                onChange={(e) => handleKeyValueChange(index, 'value', e.target.value)}
-                placeholder="Value"
-                className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-            <button
-              onClick={() => removeKeyValuePair(index)}
-              className="px-3 py-2 bg-red-500 text-white rounded hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500"
-            >
-              Remove
-            </button>
-          </div>
-        ))}
+        <div className="mb-4">
+          <label className="block text-gray-700 font-medium mb-2">
+            Input JSON Array of Key-Value Pairs
+          </label>
+          <textarea
+            value={jsonInput}
+            onChange={(e) => setJsonInput(e.target.value)}
+            rows={10}
+            className="w-full px-3 py-2 border border-gray-300 rounded font-mono text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
         
         <button
-          onClick={addKeyValuePair}
+          onClick={parseJsonInput}
           className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-500"
         >
-          Add Key-Value Pair
+          Parse JSON Input
         </button>
+        
+        {keyValuePairs.length > 0 && (
+          <div className="mt-4">
+            <h3 className="font-medium text-gray-700">Parsed Key-Value Pairs ({keyValuePairs.length}):</h3>
+            <div className="bg-gray-100 p-3 rounded mt-1 max-h-40 overflow-y-auto">
+              <table className="min-w-full">
+                <thead>
+                  <tr>
+                    <th className="text-left px-2 py-1">Key</th>
+                    <th className="text-left px-2 py-1">Value</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {keyValuePairs.map((pair, index) => (
+                    <tr key={index} className={index % 2 === 0 ? 'bg-gray-50' : ''}>
+                      <td className="px-2 py-1">{pair.key}</td>
+                      <td className="px-2 py-1">{pair.value}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
       </div>
       
       {/* Actions Section */}
