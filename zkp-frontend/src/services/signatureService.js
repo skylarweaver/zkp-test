@@ -35,11 +35,26 @@ export class SignatureService {
    * @returns {Object} The imported key pair
    */
   importKeyPair(privateKey) {
+    // Log exact string representation
+    console.log("Private key (frontend):", JSON.stringify(privateKey)); 
+    
+    // Trim any whitespace and ensure it's exactly the input string
+    const normalizedKey = String(privateKey).trim();
+    console.log("Normalized key:", normalizedKey);
+    // Log every character's code to find hidden characters
+    console.log("Key char codes:", [...normalizedKey].map(c => c.charCodeAt(0)));
+    
     try {
       this.keyPair = {
-        privateKey,
-        publicKey: derivePublicKey(privateKey)
+        privateKey: normalizedKey,
+        publicKey: derivePublicKey(normalizedKey)
       };
+      
+      // Log the resulting keys
+      console.log("Generated public key (frontend):", [
+        this.keyPair.publicKey[0].toString(),
+        this.keyPair.publicKey[1].toString()
+      ]);
       
       return {
         publicKey: [

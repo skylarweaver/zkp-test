@@ -31,7 +31,6 @@ for (const pair of keyValuePairs) {
   leaves.push(keyHash);
   leaves.push(valueHash);
 }
-console.log("Leaves:", leaves);
 
 // Create the merkle tree
 const tree = new LeanIMT(hash, leaves);
@@ -47,7 +46,20 @@ console.log("Proof:", JSON.stringify(proof, numberReplacer, 2));
 // Generate a key pair for signing
 // const privateKey = "1".padStart(64, "0");
 const privateKey = "1234567890";
+
+// Add debug information
+console.log("Private key (test script):", JSON.stringify(privateKey));
+console.log("Key char codes:", [...privateKey].map(c => c.charCodeAt(0)));
+
 const publicKey = derivePublicKey(privateKey);
+console.log("Private Key:", privateKey);
+console.log("Public Key:", publicKey);
+
+// Log the resulting keys for comparison
+console.log("Generated public key (test script):", [
+  publicKey[0].toString(),
+  publicKey[1].toString()
+]);
 
 // Sign the merkle root using the private key
 const signature = signMessage(privateKey, merkleRoot);
