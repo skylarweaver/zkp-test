@@ -1,0 +1,10 @@
+{
+  "name": "zkp-test-project",
+  "version": "1.0.0",
+  "type": "module",
+  "dependencies": {
+    "@zk-kit/eddsa-poseidon": "^0.5.0",
+    "@zk-kit/lean-imt": "^2.2.3",
+    "poseidon-lite": "^0.3.0"
+  }
+}
