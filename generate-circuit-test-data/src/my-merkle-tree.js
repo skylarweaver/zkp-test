@@ -10,6 +10,7 @@ const hash = (a, b) => poseidon2([a, b])
 // You can also initialize a tree with a given list of leaves.
 const leaves = [1, 111, 2, 222, 3, 333, 4, 444, 5, 555, 6, 666, 7, 777, 8, 888, 9, 999, 10, 1010].map(value => poseidon1([value])) 
 const tree = new LeanIMT(hash, leaves)
+console.log("Leaves:", leaves)
 
 console.log("Merkle Root:", tree.root)
 

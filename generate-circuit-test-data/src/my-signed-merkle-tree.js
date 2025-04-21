@@ -28,9 +28,10 @@ const leaves = [];
 for (const pair of keyValuePairs) {
   const valueHash = poseidon1([pair.value]);
   const keyHash = poseidon1([pair.key]);
-  leaves.push(valueHash);
   leaves.push(keyHash);
+  leaves.push(valueHash);
 }
+console.log("Leaves:", leaves);
 
 // Create the merkle tree
 const tree = new LeanIMT(hash, leaves);
@@ -44,7 +45,8 @@ const numberReplacer = (key, value) =>
 console.log("Proof:", JSON.stringify(proof, numberReplacer, 2));
 
 // Generate a key pair for signing
-const privateKey = "1".padStart(64, "0");
+// const privateKey = "1".padStart(64, "0");
+const privateKey = "1234567890";
 const publicKey = derivePublicKey(privateKey);
 
 // Sign the merkle root using the private key
