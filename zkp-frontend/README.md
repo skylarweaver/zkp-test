@@ -104,8 +104,3 @@ npm run dev
 - To change the UI, modify the React components in `src/components/`
 - To update the service logic, modify the service files in `src/services/`
 
-### Running Tests
-
-```bash
-npm test
-```

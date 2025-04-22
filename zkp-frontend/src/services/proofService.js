@@ -6,6 +6,7 @@ import * as snarkjs from 'snarkjs';
 export class ProofService {
   constructor() {
     // Paths to the required artifacts
+    // These are in the public folder
     this.wasmPath = '/circuit/circuit.wasm';
     this.zkeyPath = '/circuit/circuit_final.zkey';
     this.vkeyPath = '/circuit/verification_key.json';
