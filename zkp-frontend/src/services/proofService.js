@@ -135,12 +135,10 @@ export class ProofService {
           description: `Proof that the value for key: ${inputs.key} is between ${inputs.lowerbound} and ${inputs.upperbound}`,
           timestamp: Date.now(),
           publicInputs: {
-            merkleRoot: inputs.root,
+            key: inputs.key,
             lowerBound: inputs.lowerbound,
             upperBound: inputs.upperbound,
             pubKey: inputs.pubKey,
-            signatureR8: inputs.signedRoot_R8,
-            signatureS: inputs.signedRoot_S
           }
         }
       };

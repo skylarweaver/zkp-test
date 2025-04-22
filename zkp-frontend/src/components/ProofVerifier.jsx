@@ -184,8 +184,8 @@ function ProofVerifier() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
                         <p className="mb-2">
-                          <span className="font-medium">Merkle Root:</span>
-                          <span className="block truncate text-sm font-mono">{verificationResult.meta.publicInputs.merkleRoot}</span>
+                          <span className="font-medium">Key:</span>
+                          <span className="block truncate text-sm font-mono">{verificationResult.meta.publicInputs.key}</span>
                         </p>
                         <p className="mb-2">
                           <span className="font-medium">Lower Bound:</span> {verificationResult.meta.publicInputs.lowerBound}
@@ -198,11 +198,6 @@ function ProofVerifier() {
                         <p className="mb-2">
                           <span className="font-medium">Public Key:</span>
                           <span className="block truncate text-sm font-mono">[{verificationResult.meta.publicInputs.pubKey?.[0]?.toString().substring(0, 8)}..., {verificationResult.meta.publicInputs.pubKey?.[1]?.toString().substring(0, 8)}...]</span>
-                        </p>
-                        <p className="mb-2">
-                          <span className="font-medium">Signature:</span>
-                          <span className="block truncate text-sm font-mono">R8: [{verificationResult.meta.publicInputs.signatureR8?.[0]?.toString().substring(0, 8)}..., {verificationResult.meta.publicInputs.signatureR8?.[1]?.toString().substring(0, 8)}...]</span>
-                          <span className="block truncate text-sm font-mono">S: {verificationResult.meta.publicInputs.signatureS?.toString().substring(0, 10)}...</span>
                         </p>
                       </div>
                     </div>
