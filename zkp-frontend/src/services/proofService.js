@@ -130,10 +130,18 @@ export class ProofService {
       return {
         proof,
         publicSignals,
-        // Add metadata for the proof display with bounds information
+        // Add metadata for the proof display with bounds information and public inputs
         meta: {
           description: `Proof that the value for key: ${inputs.key} is between ${inputs.lowerbound} and ${inputs.upperbound}`,
-          timestamp: Date.now()
+          timestamp: Date.now(),
+          publicInputs: {
+            merkleRoot: inputs.root,
+            lowerBound: inputs.lowerbound,
+            upperBound: inputs.upperbound,
+            pubKey: inputs.pubKey,
+            signatureR8: inputs.signedRoot_R8,
+            signatureS: inputs.signedRoot_S
+          }
         }
       };
     } catch (error) {

@@ -137,7 +137,7 @@ function ProofVerifier() {
           <h2 className="text-xl font-semibold mb-4">Verification Result</h2>
           
           <div className="mb-6">
-            <div className={`p-4 rounded items-center ${
+            <div className={`p-4 rounded flex items-center ${
               verificationResult.isValid
                 ? 'bg-green-100 text-green-800'
                 : 'bg-red-100 text-red-800'
@@ -163,7 +163,7 @@ function ProofVerifier() {
           {verificationResult.meta && (
             <div>
               <h3 className="font-semibold text-gray-700 mb-2">Proof Metadata</h3>
-              <div className="bg-gray-100 p-4 rounded">
+              <div className="bg-gray-100 p-4 rounded mb-4">
                 {verificationResult.meta.description && (
                   <p className="mb-2">
                     <span className="font-medium">Description:</span> {verificationResult.meta.description}
@@ -175,6 +175,40 @@ function ProofVerifier() {
                   </p>
                 )}
               </div>
+              
+              {verificationResult.meta.publicInputs && (
+                <div>
+                  <h3 className="font-semibold text-gray-700 mb-2">Public Inputs</h3>
+                  <div className="bg-blue-50 p-4 rounded border border-blue-200">
+                    <p className="text-sm text-gray-500 mb-2">These inputs are publicly visible and part of the verification process:</p>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <p className="mb-2">
+                          <span className="font-medium">Merkle Root:</span>
+                          <span className="block truncate text-sm font-mono">{verificationResult.meta.publicInputs.merkleRoot}</span>
+                        </p>
+                        <p className="mb-2">
+                          <span className="font-medium">Lower Bound:</span> {verificationResult.meta.publicInputs.lowerBound}
+                        </p>
+                        <p className="mb-2">
+                          <span className="font-medium">Upper Bound:</span> {verificationResult.meta.publicInputs.upperBound}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="mb-2">
+                          <span className="font-medium">Public Key:</span>
+                          <span className="block truncate text-sm font-mono">[{verificationResult.meta.publicInputs.pubKey?.[0]?.toString().substring(0, 8)}..., {verificationResult.meta.publicInputs.pubKey?.[1]?.toString().substring(0, 8)}...]</span>
+                        </p>
+                        <p className="mb-2">
+                          <span className="font-medium">Signature:</span>
+                          <span className="block truncate text-sm font-mono">R8: [{verificationResult.meta.publicInputs.signatureR8?.[0]?.toString().substring(0, 8)}..., {verificationResult.meta.publicInputs.signatureR8?.[1]?.toString().substring(0, 8)}...]</span>
+                          <span className="block truncate text-sm font-mono">S: {verificationResult.meta.publicInputs.signatureS?.toString().substring(0, 10)}...</span>
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>
