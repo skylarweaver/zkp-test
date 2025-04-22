@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import MerkleTreeService from '../services/merkleTree';
 import ProofService from '../services/proofService';
+import { useAppContext } from '../contexts/AppContext';
 
 /**
  * ProofGenerator component
@@ -11,16 +12,24 @@ function ProofGenerator() {
   const [merkleService] = useState(new MerkleTreeService());
   const [proofService] = useState(new ProofService());
   
-  // State
-  const [podInput, setPodInput] = useState('');
-  const [pod, setPod] = useState(null);
-  const [selectedKeyIndex, setSelectedKeyIndex] = useState(-1);
-  const [lowerBound, setLowerBound] = useState('');
-  const [upperBound, setUpperBound] = useState('');
-  const [proof, setProof] = useState(null);
+  // Get context state
+  const { proofState, updateProofState, transferProofToVerifier } = useAppContext();
+  
+  // Local state
   const [isGeneratingProof, setIsGeneratingProof] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  
+  // Destructure values from context state for easier access
+  const { podInput, pod, selectedKeyIndex, lowerBound, upperBound, proof } = proofState;
+  
+  // Helper functions to update individual properties
+  const setPodInput = (input) => updateProofState({ podInput: input });
+  const setPod = (podData) => updateProofState({ pod: podData });
+  const setSelectedKeyIndex = (index) => updateProofState({ selectedKeyIndex: index });
+  const setLowerBound = (bound) => updateProofState({ lowerBound: bound });
+  const setUpperBound = (bound) => updateProofState({ upperBound: bound });
+  const setProof = (proofData) => updateProofState({ proof: proofData });
   
   /**
    * Parse a POD from JSON input
@@ -117,8 +126,13 @@ function ProofGenerator() {
    */
   const copyProof = () => {
     try {
-      navigator.clipboard.writeText(proofService.exportProof(proof));
-      setSuccess('Proof copied to clipboard');
+      const proofJson = proofService.exportProof(proof);
+      navigator.clipboard.writeText(proofJson);
+      
+      // Also transfer the proof to the verifier for convenience
+      transferProofToVerifier(proof);
+      
+      setSuccess('Proof copied to clipboard and ready for verification');
       setTimeout(() => setSuccess(''), 3000);
     } catch (err) {
       setError(`Failed to copy proof: ${err.message}`);
@@ -277,4 +291,4 @@ function ProofGenerator() {
   );
 }
 
-export default ProofGenerator; 
+export default ProofGenerator;

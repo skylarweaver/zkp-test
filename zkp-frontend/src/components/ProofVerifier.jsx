@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import ProofService from '../services/proofService';
+import { useAppContext } from '../contexts/AppContext';
 
 /**
  * ProofVerifier component
@@ -9,12 +10,20 @@ function ProofVerifier() {
   // Services
   const [proofService] = useState(new ProofService());
   
-  // State
-  const [proofInput, setProofInput] = useState('');
+  // Get context state
+  const { verifierState, updateVerifierState } = useAppContext();
+  
+  // Local state
   const [isVerifying, setIsVerifying] = useState(false);
-  const [verificationResult, setVerificationResult] = useState(null);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  
+  // Destructure values from context state for easier access
+  const { proofInput, verificationResult } = verifierState;
+  
+  // Helper functions to update individual properties
+  const setProofInput = (input) => updateVerifierState({ proofInput: input });
+  const setVerificationResult = (result) => updateVerifierState({ verificationResult: result });
   
   /**
    * Verify a proof from JSON input

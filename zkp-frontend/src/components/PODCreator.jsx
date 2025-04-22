@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import MerkleTreeService from '../services/merkleTree';
 import SignatureService from '../services/signatureService';
+import { useAppContext } from '../contexts/AppContext';
 
 /**
  * POD Creator component
@@ -11,15 +12,22 @@ function PODCreator() {
   const [merkleService] = useState(new MerkleTreeService());
   const [signatureService] = useState(new SignatureService());
   
-  // State
-  const [keyValuePairs, setKeyValuePairs] = useState([{ key: '', value: '' }]);
-  // const [jsonInput, setJsonInput] = useState('[\n  { key: 1, value: 111 },\n  { key: 2, value: 222 }\n]');
-  const [jsonInput, setJsonInput] = useState('[\n   { key: 1, value: 111 },\n   { key: 2, value: 222 },\n   { key: 3, value: 333 },\n   { key: 4, value: 444 },\n   { key: 5, value: 555 },\n   { key: 6, value: 666 },\n   { key: 7, value: 777 },\n   { key: 8, value: 888 },\n   { key: 9, value: 999 },\n   { key: 10, value: 1010 } \n]');
-  const [privateKey, setPrivateKey] = useState('1234567890');
-  const [generatedPublicKey, setGeneratedPublicKey] = useState(null);
-  const [pod, setPod] = useState(null);
+  // Get context state
+  const { podState, updatePodState, transferPodToProofGenerator } = useAppContext();
+  
+  // Local state
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  
+  // Destructure values from context state for easier access
+  const { keyValuePairs, jsonInput, privateKey, generatedPublicKey, pod } = podState;
+  
+  // Helper functions to update individual properties
+  const setKeyValuePairs = (pairs) => updatePodState({ keyValuePairs: pairs });
+  const setJsonInput = (input) => updatePodState({ jsonInput: input });
+  const setPrivateKey = (key) => updatePodState({ privateKey: key });
+  const setGeneratedPublicKey = (pubKey) => updatePodState({ generatedPublicKey: pubKey });
+  const setPod = (podData) => updatePodState({ pod: podData });
   
   /**
    * Parse JSON input and update key-value pairs
@@ -207,6 +215,10 @@ function PODCreator() {
   const copyPOD = () => {
     try {
       navigator.clipboard.writeText(JSON.stringify(pod, null, 2));
+      
+      // Also transfer the POD to proof generator for convenience
+      transferPodToProofGenerator();
+      
       setSuccess('POD copied to clipboard');
       setTimeout(() => setSuccess(''), 3000);
     } catch (err) {
