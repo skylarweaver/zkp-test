@@ -1,9 +1,9 @@
 pragma circom 2.1.6;
 
-include "circomlib/poseidon.circom";
-include "circomlib/comparators.circom";
-include "circomlib/bitify.circom";
-include "circomlib/eddsaposeidon.circom";
+include "circomlib/circuits/poseidon.circom";
+include "circomlib/circuits/comparators.circom";
+include "circomlib/circuits/bitify.circom";
+include "circomlib/circuits/eddsaposeidon.circom";
 
 template proveValueForKeyIsInSignedMerkleTreeAndWithinBounds(depth) {
     signal input key; // public

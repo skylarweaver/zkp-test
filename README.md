@@ -31,6 +31,8 @@ The project uses several cryptographic primitives:
 
 ```
 zkp-test-project/
+├── circuits/                  # Circom circuits for zero-knowledge proofs
+│   └── proveValueInMerkle.circom # Main circuit for proving values in a Merkle tree
 ├── zkp-frontend/              # Frontend React application
 │   ├── src/
 │   │   ├── components/        # UI components for each functionality
@@ -51,7 +53,10 @@ zkp-test-project/
 │   │       ├── circuit.wasm       # WebAssembly compiled circuit
 │   │       ├── circuit_final.zkey # Proving key
 │   │       └── verification_key.json # Verification key
-├── valueinmerkle.circom       # The circom circuit for the ZK proof
+├── generate-circuit-test-data/ # Utilities for generating test data
+│   ├── src/                    # Source code for test data generation
+│   │   ├── my-merkle-tree.js    # Basic Merkle tree generation
+│   │   └── my-signed-merkle-tree.js # Signed Merkle tree with EdDSA
 ```
 
 ## Getting Started
@@ -83,11 +88,11 @@ npm install
 curl -o pot15_final.ptau https://hermez.s3-eu-west-1.amazonaws.com/pot15_final.ptau
 
 # Compile circuit
-circom ../valueinmerkle.circom --r1cs --wasm --sym -o build
+circom ../circuits/proveValueInMerkle.circom --r1cs --wasm --sym -o build
 
 # Generate proving key
 cd build
-npx snarkjs groth16 setup valueinmerkle.r1cs ../pot15_final.ptau circuit_0000.zkey
+npx snarkjs groth16 setup proveValueInMerkle.r1cs ../pot15_final.ptau circuit_0000.zkey
 
 # Contribute to the ceremony
 npx snarkjs zkey contribute circuit_0000.zkey circuit_final.zkey --name="First contribution" -e="random entropy"
@@ -99,7 +104,7 @@ npx snarkjs zkey export verificationkey circuit_final.zkey verification_key.json
 mkdir -p ../public/circuit
 
 # Copy artifacts
-cp valueinmerkle_js/valueinmerkle.wasm ../public/circuit/circuit.wasm
+cp proveValueInMerkle_js/proveValueInMerkle.wasm ../public/circuit/circuit.wasm
 cp circuit_final.zkey ../public/circuit/circuit_final.zkey
 cp verification_key.json ../public/circuit/verification_key.json
 ```
@@ -137,6 +142,29 @@ For a production environment, consider:
 - Implementing proper key management strategies
 - Adding additional security measures for private keys
 - Using secure, audited libraries for cryptographic operations
+
+## Circuit Development and Testing
+
+### Testing with zkREPL
+
+The project includes a `generate-circuit-test-data` directory that contains utilities for generating test data to use while developing the circom circuit. These tools help you:
+
+1. Generate sample Merkle trees with key-value pairs
+2. Create signatures using EdDSA
+3. Format data into the correct structure for circuit inputs
+4. Generate proofs for testing in zkREPL or other environments
+
+To use the test data generators:
+
+```bash
+cd generate-circuit-test-data
+npm install
+node src/my-signed-merkle-tree.js
+```
+
+This creates sample data that you can use as input for testing the circuit in environments like [zkREPL](https://zkrepl.dev/), helping with circuit development and debugging before integrating with the frontend application.
+
+The generated data follows the input format expected by the `proveValueInMerkle.circom` circuit, making it easy to test circuit functionality independently from the UI.
 
 ## Learning Resources
 
