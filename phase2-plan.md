@@ -50,7 +50,7 @@ For development, we can download an existing Phase 1 output:
 
 ```bash
 # Download an existing Powers of Tau Phase 1 output (for circuits up to 2^12 constraints)
-curl -o pot12_final.ptau https://hermez.s3-eu-west-1.amazonaws.com/pot12_final.ptau
+curl -o pot15_final.ptau https://hermez.s3-eu-west-1.amazonaws.com/pot15_final.ptau
 ```
 
 #### For Production
@@ -58,25 +58,26 @@ For a production environment, you may want to conduct your own Phase 1 ceremony 
 
 ```bash
 # Step 1: Start a new Powers of Tau ceremony (specify maximum circuit size, e.g., 2^12)
-snarkjs powersoftau new bn128 12 pot12_0000.ptau -v
+npx snarkjs powersoftau new bn128 15 pot15_0000.ptau -v
 
 # Step 2: First participant contributes randomness
-snarkjs powersoftau contribute pot12_0000.ptau pot12_0001.ptau --name="First contributor" -v
+npx snarkjs powersoftau contribute pot15_0000.ptau pot15_0001.ptau --name="First contributor" -v
 
 # Step 3: Second participant contributes (this would be done on a different secure machine)
-snarkjs powersoftau contribute pot12_0001.ptau pot12_0002.ptau --name="Second contributor" -v
+npx snarkjs powersoftau contribute pot15_0001.ptau pot15_0002.ptau --name="Second contributor" -v
 
 # Step 4: Third participant contributes (and so on for as many participants as desired)
-snarkjs powersoftau contribute pot12_0002.ptau pot12_0003.ptau --name="Third contributor" -v
+npx snarkjs powersoftau contribute pot15_0002.ptau pot15_0003.ptau --name="Third contributor" -v
 
 # Step 5: Optional - Add a random beacon (e.g., using random data from a public source like Bitcoin blockchain)
-snarkjs powersoftau beacon pot12_000N.ptau pot12_beacon.ptau 0102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f 10 -n="Final Beacon"
+npx snarkjs powersoftau beacon pot15_000N.ptau pot15_beacon.ptau 0102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f 10 -n="Final Beacon"
+# Replace "N" in pot15_000N with the number of your last contribution
 
 # Step 6: Prepare for Phase 2 (circuit-specific setup)
-snarkjs powersoftau prepare phase2 pot12_beacon.ptau pot12_final.ptau -v
+npx snarkjs powersoftau prepare phase2 pot15_beacon.ptau pot15_final.ptau -v
 
 # Step 7: Verify the Powers of Tau ceremony
-snarkjs powersoftau verify pot12_final.ptau
+npx snarkjs powersoftau verify pot15_final.ptau
 ```
 
 Key security considerations for a proper Phase 1 ceremony:
@@ -92,22 +93,22 @@ Key security considerations for a proper Phase 1 ceremony:
 mkdir -p build/circuits
 
 # Compile circuit to R1CS
-circom valueinmerkle.circom --r1cs --wasm --sym -o build/circuits
+circom proveValueInMerkle.circom --r1cs --wasm --sym -l /Users/sky/zkp-test-project/zkp-frontend/node_modules
 
 # Generate a proving key from Phase 1 output (Circuit-specific Phase 2 ceremony starts here)
-snarkjs groth16 setup build/circuits/valueinmerkle.r1cs pot12_final.ptau build/circuits/circuit_0000.zkey
+npx snarkjs groth16 setup proveValueInMerkle.r1cs ../pot15_final.ptau circuit_0000.zkey
 
 # Contribute to the Phase 2 ceremony (in production, multiple participants would contribute)
-snarkjs zkey contribute build/circuits/circuit_0000.zkey build/circuits/circuit_final.zkey --name="First contribution" -e="random entropy"
+npx snarkjs zkey contribute circuit_0000.zkey circuit_final.zkey --name="First contribution" -e="random entropy"
 
 # Export the verification key
-snarkjs zkey export verificationkey build/circuits/circuit_final.zkey build/circuits/verification_key.json
+npx snarkjs zkey export verificationkey circuit_final.zkey verification_key.json
 
 # Copy the compiled artifacts to the React public folder
 mkdir -p public/circuit
-cp build/circuits/valueinmerkle_js/valueinmerkle.wasm public/circuit/circuit.wasm
-cp build/circuits/circuit_final.zkey public/circuit/circuit_final.zkey
-cp build/circuits/verification_key.json public/circuit/verification_key.json
+cp proveValueInMerkle_js/proveValueInMerkle.wasm ../../public/circuit/circuit.wasm
+cp circuit_final.zkey ../../public/circuit/circuit_final.zkey
+cp verification_key.json ../../public/circuit/verification_key.json
 ```
 
 Note: In a production environment, the Phase 2 ceremony should involve multiple trusted participants. For our development purposes, a single contribution is sufficient, but it's important to understand that real-world applications would require a more extensive trusted setup process.

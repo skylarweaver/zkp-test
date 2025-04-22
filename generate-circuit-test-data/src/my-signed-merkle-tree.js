@@ -47,12 +47,7 @@ console.log("Proof:", JSON.stringify(proof, numberReplacer, 2));
 // const privateKey = "1".padStart(64, "0");
 const privateKey = "1234567890";
 
-// Add debug information
-console.log("Private key (test script):", JSON.stringify(privateKey));
-console.log("Key char codes:", [...privateKey].map(c => c.charCodeAt(0)));
-
 const publicKey = derivePublicKey(privateKey);
-console.log("Private Key:", privateKey);
 console.log("Public Key:", publicKey);
 
 // Log the resulting keys for comparison

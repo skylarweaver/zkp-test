@@ -8,16 +8,18 @@ include "circomlib/eddsaposeidon.circom";
 template proveValueForKeyIsInSignedMerkleTreeAndWithinBounds(depth) {
     signal input key; // public
     signal input value; // private
-    signal input index; // private; position of the value leaf
-    signal input siblings[depth];  // private; sibling hashes
-    signal input root; // private
     signal input lowerbound; // public
     signal input upperbound; // public
-    signal merkleHash[depth + 1];  // to store each intermediate hash
-    signal keyHash; // Hash key to make sure it matches sibling which proves the key is included in the merkle tree
+    signal input index; // private; position of the "value" leaf
+    signal input siblings[depth];  // private; sibling hashes
+    signal input root; // private
     signal input pubKey[2]; // pubkey that signed the merkle root, public
     signal input signedRoot_R8[2]; // signed root part 1, private
     signal input signedRoot_S; // signed root part 2, private
+
+    signal merkleHash[depth + 1];  // to store each intermediate hash
+    signal keyHash; // Hash key to make sure it matches sibling which proves the key is included in the merkle tree
+
     
     log("Input root:", root); log();
     
@@ -104,10 +106,10 @@ component main { public [key, lowerbound, upperbound, pubKey] } = proveValueForK
     "value": "444",
     "root": "2410060041662479625104463288801171177730038979372211654245303149537675822189",
     "signedRoot_R8": [
-        "12008399599765881843647625022259516683596781671064158301055175038428110261883",
-        "3813225052866031216134840235037920001354978356951613895340109854851006967456"
+        "7570548375703895854812559012909518690462402821876891316580078995286445261518",
+        "19492467065393392502570694241015234265319549649814906017701980429841787170241"
     ],
-    "signedRoot_S": "906152090810102458345295621868221305219170208225118200859232005163109594912",
+    "signedRoot_S": "2432145816887600171530930884639509508547804919857622981455996426209963104467",
     "index": "7",
     "siblings": [
         "9900412353875306532763997210486973311966982345069434572804920993370933366268",
@@ -119,8 +121,8 @@ component main { public [key, lowerbound, upperbound, pubKey] } = proveValueForK
     "lowerbound": "0",
     "upperbound": "500",
     "pubKey": [
-        "12981577778853600627300647406335280042780558321152360659770344479901705116398",
-        "20212930197870073521983811105864865363227616457743210051335548370350422091595"
+        "18838193697589519906914248967826513570278429087702812145949942469956693039846",
+        "20537376643099189815843311276532876829959308365896675195004039254313266171647"
     ]
 
 } */

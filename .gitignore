@@ -6,7 +6,7 @@ yarn-error.log
 package-lock.json
 
 # Build outputs
-build/
+# build/
 dist/
 *.out
 
