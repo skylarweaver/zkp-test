@@ -238,7 +238,7 @@ function PODCreator() {
               onClick={importPrivateKey}
               className="bg-gray-200 px-4 py-2 border border-gray-300 border-l-0 rounded-r hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
-              Import
+              Import Private Key
             </button>
           </div>
         </div>

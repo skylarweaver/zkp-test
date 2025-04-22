@@ -129,9 +129,9 @@ export class ProofService {
       return {
         proof,
         publicSignals,
-        // Add metadata for the proof display
+        // Add metadata for the proof display with bounds information
         meta: {
-          description: `Proof for key: ${inputs.key}`,
+          description: `Proof that the value for key: ${inputs.key} is between ${inputs.lowerbound} and ${inputs.upperbound}`,
           timestamp: Date.now()
         }
       };

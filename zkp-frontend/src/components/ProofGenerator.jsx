@@ -166,6 +166,7 @@ function ProofGenerator() {
             value={podInput}
             onChange={handlePodInputChange}
             placeholder="Paste your POD JSON here"
+            rows={20}
             className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 h-40 font-mono"
           />
         </div>

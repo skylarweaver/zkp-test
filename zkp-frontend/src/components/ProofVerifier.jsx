@@ -91,6 +91,7 @@ function ProofVerifier() {
             value={proofInput}
             onChange={handleProofInputChange}
             placeholder="Paste your proof JSON here"
+            rows={20}
             className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 h-60 font-mono"
           />
         </div>
@@ -127,7 +128,7 @@ function ProofVerifier() {
           <h2 className="text-xl font-semibold mb-4">Verification Result</h2>
           
           <div className="mb-6">
-            <div className={`p-4 rounded flex items-center ${
+            <div className={`p-4 rounded items-center ${
               verificationResult.isValid
                 ? 'bg-green-100 text-green-800'
                 : 'bg-red-100 text-red-800'
