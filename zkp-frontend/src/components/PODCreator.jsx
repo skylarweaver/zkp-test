@@ -13,8 +13,9 @@ function PODCreator() {
   
   // State
   const [keyValuePairs, setKeyValuePairs] = useState([{ key: '', value: '' }]);
-  const [jsonInput, setJsonInput] = useState('[\n  { key: 1, value: 111 },\n  { key: 2, value: 222 }\n]');
-  const [privateKey, setPrivateKey] = useState('');
+  // const [jsonInput, setJsonInput] = useState('[\n  { key: 1, value: 111 },\n  { key: 2, value: 222 }\n]');
+  const [jsonInput, setJsonInput] = useState('[\n   { key: 1, value: 111 },\n   { key: 2, value: 222 },\n   { key: 3, value: 333 },\n   { key: 4, value: 444 },\n   { key: 5, value: 555 },\n   { key: 6, value: 666 },\n   { key: 7, value: 777 },\n   { key: 8, value: 888 },\n   { key: 9, value: 999 },\n   { key: 10, value: 1010 } \n]');
+  const [privateKey, setPrivateKey] = useState('1234567890');
   const [generatedPublicKey, setGeneratedPublicKey] = useState(null);
   const [pod, setPod] = useState(null);
   const [error, setError] = useState('');
@@ -29,9 +30,21 @@ function PODCreator() {
       // Replace single quotes with double quotes and evaluate the JSON
       const sanitizedJson = jsonInput.replace(/'/g, '"').replace(/(\w+):/g, '"$1":');
       
-      // Use Function constructor to safely evaluate the JSON string
-      // This handles cases where the input uses JS object syntax (without quotes around keys)
-      const parsedData = (new Function(`return ${sanitizedJson}`))();
+      let parsedData;
+      try {
+        // First try standard JSON.parse with the sanitized input
+        parsedData = JSON.parse(sanitizedJson);
+      } catch (jsonError) {
+        console.log("JSON parse failed, trying Function constructor", jsonError);
+        // If that fails, use Function constructor as fallback
+        try {
+          // Use Function constructor to safely evaluate the JSON string
+          // This handles cases where the input uses JS object syntax (without quotes around keys)
+          parsedData = (new Function(`return ${sanitizedJson}`))();
+        } catch (funcError) {
+          throw new Error(`Invalid JSON format: ${funcError.message}`);
+        }
+      }
       
       if (!Array.isArray(parsedData)) {
         throw new Error('Input must be an array of key-value pairs');
@@ -111,25 +124,54 @@ function PODCreator() {
       // Reset the merkle service
       merkleService.reset();
       
-      // Add key-value pairs to the merkle tree
-      validPairs.forEach(({ key, value }) => {
-        merkleService.addKeyValuePair(key, value);
-      });
-      
-      // Build the merkle tree
-      merkleService.buildTree();
-      
-      // Get the POD data
-      const podData = merkleService.exportData();
-      
-      // Sign the POD with the private key
-      const signedPOD = signatureService.signPOD(podData);
-      
-      // Set the POD
-      setPod(signedPOD);
-      setSuccess('POD created successfully');
-      setTimeout(() => setSuccess(''), 3000);
+      try {
+        // Add key-value pairs to the merkle tree
+        validPairs.forEach(({ key, value }) => {
+          merkleService.addKeyValuePair(key, value);
+        });
+        
+        // Build the merkle tree
+        merkleService.buildTree();
+        
+        // Get the POD data
+        const podData = merkleService.exportData();
+        
+        // Ensure data is properly formatted for signing
+        if (!podData || typeof podData !== 'object') {
+          throw new Error('Invalid POD data format');
+        }
+        
+        // Ensure data property is an array
+        if (!Array.isArray(podData.data)) {
+          throw new Error('POD data must be an array');
+        }
+        
+        console.log("podData", podData);
+        
+        // Sign the POD with the private key
+        try {
+          const signedPOD = signatureService.signPOD(podData);
+          
+          // Set the POD
+          setPod(signedPOD);
+          setSuccess('POD created successfully');
+          setTimeout(() => setSuccess(''), 3000);
+        } catch (signError) {
+          console.error("POD signing error:", signError);
+          
+          // Handle specific array errors
+          if (signError.message && signError.message.includes(".map")) {
+            throw new Error('Array operation failed during signing. Input data may be malformed.');
+          }
+          
+          throw signError;
+        }
+      } catch (processError) {
+        console.error("POD creation process error:", processError);
+        throw processError;
+      }
     } catch (err) {
+      console.error("POD creation failed:", err);
       setError(`Failed to create POD: ${err.message}`);
     }
   };

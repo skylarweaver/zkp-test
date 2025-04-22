@@ -36,13 +36,9 @@ export class SignatureService {
    */
   importKeyPair(privateKey) {
     // Log exact string representation
-    console.log("Private key (frontend):", JSON.stringify(privateKey)); 
     
     // Trim any whitespace and ensure it's exactly the input string
     const normalizedKey = String(privateKey).trim();
-    console.log("Normalized key:", normalizedKey);
-    // Log every character's code to find hidden characters
-    console.log("Key char codes:", [...normalizedKey].map(c => c.charCodeAt(0)));
     
     try {
       this.keyPair = {
@@ -51,10 +47,10 @@ export class SignatureService {
       };
       
       // Log the resulting keys
-      console.log("Generated public key (frontend):", [
-        this.keyPair.publicKey[0].toString(),
-        this.keyPair.publicKey[1].toString()
-      ]);
+      // console.log("Generated public key (frontend):", [
+      //   this.keyPair.publicKey[0].toString(),
+      //   this.keyPair.publicKey[1].toString()
+      // ]);
       
       return {
         publicKey: [
@@ -138,21 +134,54 @@ export class SignatureService {
    * @returns {Object} The POD with signature added
    */
   signPOD(pod) {
-    if (!pod.merkleRoot) {
-      throw new Error('POD must have a Merkle root to sign');
+    try {
+      console.log("Signing POD:", JSON.stringify(pod, null, 2));
+      
+      // Validate the pod structure
+      if (!pod.merkleRoot) {
+        throw new Error('POD must have a Merkle root to sign');
+      }
+
+      if (!pod.data || !Array.isArray(pod.data) || pod.data.length === 0) {
+        throw new Error('POD must have a non-empty data array');
+      }
+
+      // Validate that the keyPair exists
+      if (!this.keyPair || !this.keyPair.privateKey) {
+        throw new Error('No valid key pair available for signing');
+      }
+
+      try {
+        // Try to sign the root with explicit error handling
+        const merkleRoot = String(pod.merkleRoot);
+        console.log("Signing merkle root:", merkleRoot);
+        
+        const signature = this.sign(merkleRoot);
+        
+        // Ensure the public key is properly formatted
+        const publicKey = [
+          this.keyPair.publicKey[0].toString(),
+          this.keyPair.publicKey[1].toString()
+        ];
+        
+        // Create and return the signed POD
+        return {
+          ...pod,
+          signature,
+          publicKey
+        };
+      } catch (signError) {
+        console.error("Signing error:", signError);
+        // Check for specific array error
+        if (signError.message && signError.message.includes(".map")) {
+          throw new Error("Array operation failed during signing. Check data format.");
+        }
+        throw new Error(`Failed to sign POD: ${signError.message}`);
+      }
+    } catch (error) {
+      console.error("POD signing failed:", error);
+      throw new Error(`Failed to sign POD: ${error.message}`);
     }
-
-    const signature = this.sign(pod.merkleRoot);
-    const publicKey = [
-      this.keyPair.publicKey[0].toString(),
-      this.keyPair.publicKey[1].toString()
-    ];
-
-    return {
-      ...pod,
-      signature,
-      publicKey
-    };
   }
 
   /**

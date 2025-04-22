@@ -83,12 +83,47 @@ export class ProofService {
       // Format inputs for the circuit
       const inputs = this.formatCircuitInputs(proofRequest);
       
-      // Generate the proof
-      const { proof, publicSignals } = await snarkjs.groth16.fullProve(
-        inputs,
-        this.wasmPath,
-        this.zkeyPath
-      );
+      // Ensure all inputs are properly formatted for snarkjs
+      const formattedInputs = {
+        key: inputs.key.toString(),
+        value: inputs.value.toString(),
+        index: inputs.index.toString(),
+        siblings: Array.isArray(inputs.siblings) 
+          ? inputs.siblings.map(s => s.toString()) 
+          : [],
+        root: inputs.root.toString(),
+        lowerbound: inputs.lowerbound.toString(),
+        upperbound: inputs.upperbound.toString(),
+        signedRoot_R8: Array.isArray(inputs.signedRoot_R8) 
+          ? inputs.signedRoot_R8.map(s => s.toString()) 
+          : ["0", "0"],
+        signedRoot_S: inputs.signedRoot_S.toString(),
+        pubKey: Array.isArray(inputs.pubKey) 
+          ? inputs.pubKey.map(p => p.toString()) 
+          : ["0", "0"]
+      };
+      
+      console.log("Generating proof with inputs:", JSON.stringify(formattedInputs, null, 2));
+      
+      // Generate the proof with specific error handling
+      let proof, publicSignals;
+      try {
+        // Try to generate the proof
+        const result = await snarkjs.groth16.fullProve(
+          formattedInputs,
+          this.wasmPath,
+          this.zkeyPath
+        );
+        proof = result.proof;
+        publicSignals = result.publicSignals;
+      } catch (snarkError) {
+        console.error("SnarkJS error:", snarkError);
+        // Check specifically for the _inputs.map error
+        if (snarkError.message && snarkError.message.includes("_inputs.map")) {
+          throw new Error("Input format error: expecting array but received another type. Please check the input data format.");
+        }
+        throw new Error(`Proof generation failed: ${snarkError.message}`);
+      }
       
       // Format the proof and public signals for easier use
       return {

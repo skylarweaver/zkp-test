@@ -1,11 +1,11 @@
 import { poseidon1, poseidon2 } from 'poseidon-lite';
 import { LeanIMT } from '@zk-kit/lean-imt';
 
-// Convert a number to a BigInt with proper handling
-const toBigInt = (n) => {
-  if (typeof n === 'bigint') return n;
-  if (typeof n === 'number' || typeof n === 'string') return BigInt(n);
-  throw new Error(`Cannot convert ${typeof n} to BigInt`);
+// Convert input to string with proper handling
+const toStringValue = (n) => {
+  if (typeof n === 'string') return n;
+  if (typeof n === 'number' || typeof n === 'bigint') return n.toString();
+  throw new Error(`Cannot convert ${typeof n} to string`);
 };
 
 /**
@@ -33,11 +33,11 @@ export class MerkleTreeService {
    * @param {number|string} value - The value (will be hashed)
    */
   addKeyValuePair(key, value) {
-    const keyBigInt = toBigInt(key);
-    const valueBigInt = toBigInt(value);
-    
-    this.data.push({ key: keyBigInt, value: valueBigInt });
+    const keyStr = toStringValue(key);
+    const valueStr = toStringValue(value);
+    this.data.push({ key: keyStr, value: valueStr });
   }
+
 
   /**
    * Build the Merkle tree from the current data
@@ -51,25 +51,34 @@ export class MerkleTreeService {
       const { key, value } = this.data[i];
       
       // Hash the value
-      const valueHash = poseidon1([value.toString()]);
+      const valueHash = poseidon1([value]);
       
       // Hash the key
-      const keyHash = poseidon1([key.toString()]);
+      const keyHash = poseidon1([key]);
       
       // Add key-value pair as adjacent leaves
-      leaves.push(valueHash);
       leaves.push(keyHash);
+      leaves.push(valueHash);
     }
-    
     // Pad with zeros if needed to reach a power of 2
-    const totalLeaves = 2 ** this.depth;
-    while (leaves.length < totalLeaves) {
-      leaves.push(BigInt(0));
-    }
+    // const totalLeaves = 2 ** this.depth;
+    // while (leaves.length < totalLeaves) {
+    //   leaves.push("0");
+    // }
     
-    // Build the tree
-    this.tree = new LeanIMT(poseidon2, leaves);
-    this.root = this.tree.root;
+    // Build the tree with error handling
+    try {
+        
+      if (leaves.length === 0) {
+        throw new Error('No leaves available to build Merkle tree');
+      }
+      const hash = (a, b) => poseidon2([a, b]);
+      this.tree = new LeanIMT(hash, leaves);
+      this.root = this.tree.root;
+    } catch (error) {
+      console.error("Failed to build Merkle tree:", error);
+      throw new Error(`Failed to build Merkle tree: ${error.message}`);
+    }
     
     return this.root;
   }
@@ -90,8 +99,8 @@ export class MerkleTreeService {
     
     const { key, value } = this.data[index];
     
-    // Calculate leaf indices (value is at 2*index, key is at 2*index+1)
-    const valueIndex = index * 2;
+    // Calculate leaf indices (key is at 2*index, value is at 2*index+1)
+    const valueIndex = index * 2 +1;
     
     // Get the sibling paths
     const valueProof = this.tree.generateProof(valueIndex);
@@ -113,12 +122,14 @@ export class MerkleTreeService {
     if (!this.tree || !this.root) {
       throw new Error('Tree has not been built yet');
     }
+    // Ensure data is properly formatted as an array of objects
+    const formattedData = this.data.map(({ key, value }) => ({
+      key: key.toString(),
+      value: value.toString()
+    }));
     
     return {
-      data: this.data.map(({ key, value }) => ({
-        key: key.toString(),
-        value: value.toString()
-      })),
+      data: formattedData,
       merkleRoot: this.root.toString(),
       // The signature will be added by the signature service
     };
