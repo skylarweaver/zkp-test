@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import MerkleTreeService from '../services/merkleTree';
 import ProofService from '../services/proofService';
 import { useAppContext } from '../contexts/AppContext';
@@ -19,17 +19,15 @@ function ProofGenerator() {
   const [isGeneratingProof, setIsGeneratingProof] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [directPodInput, setDirectPodInput] = useState(''); // Main POD input
+  const [localPod, setLocalPod] = useState(null); // Local POD state
+  const [localSelectedKeyIndex, setLocalSelectedKeyIndex] = useState(-1);
+  const [localLowerBound, setLocalLowerBound] = useState('');
+  const [localUpperBound, setLocalUpperBound] = useState('');
+  const [localProof, setLocalProof] = useState(null);
   
   // Destructure values from context state for easier access
-  const { podInput, pod, selectedKeyIndex, lowerBound, upperBound, proof } = proofState;
-  
-  // Helper functions to update individual properties
-  const setPodInput = (input) => updateProofState({ podInput: input });
-  const setPod = (podData) => updateProofState({ pod: podData });
-  const setSelectedKeyIndex = (index) => updateProofState({ selectedKeyIndex: index });
-  const setLowerBound = (bound) => updateProofState({ lowerBound: bound });
-  const setUpperBound = (bound) => updateProofState({ upperBound: bound });
-  const setProof = (proofData) => updateProofState({ proof: proofData });
+  const { pod, selectedKeyIndex, lowerBound, upperBound, proof } = proofState;
   
   /**
    * Parse a POD from JSON input
@@ -37,16 +35,16 @@ function ProofGenerator() {
   const parsePOD = () => {
     try {
       setError('');
-      setPod(null);
-      setSelectedKeyIndex(-1);
-      setProof(null);
+      setLocalPod(null);
+      setLocalSelectedKeyIndex(-1);
+      setLocalProof(null);
       
-      if (!podInput.trim()) {
+      if (!directPodInput.trim()) {
         throw new Error('POD input is required');
       }
       
       // Parse the POD
-      const parsedPOD = JSON.parse(podInput);
+      const parsedPOD = JSON.parse(directPodInput);
       
       // Validate the POD
       if (!parsedPOD.data || !Array.isArray(parsedPOD.data) || 
@@ -57,8 +55,8 @@ function ProofGenerator() {
       // Import the POD data into the merkle service
       merkleService.importData(parsedPOD);
       
-      // Set the POD
-      setPod(parsedPOD);
+      // Set the POD in local state only
+      setLocalPod(parsedPOD);
       setSuccess('POD loaded successfully');
       setTimeout(() => setSuccess(''), 3000);
     } catch (err) {
@@ -72,26 +70,26 @@ function ProofGenerator() {
   const generateProof = async () => {
     try {
       setError('');
-      setProof(null);
+      setLocalProof(null);
       setIsGeneratingProof(true);
       
-      if (!pod) {
+      if (!localPod) {
         throw new Error('No POD loaded');
       }
       
-      if (selectedKeyIndex < 0 || selectedKeyIndex >= pod.data.length) {
+      if (localSelectedKeyIndex < 0 || localSelectedKeyIndex >= localPod.data.length) {
         throw new Error('No key-value pair selected');
       }
       
-      if (lowerBound.trim() === '' || upperBound.trim() === '') {
+      if (localLowerBound.trim() === '' || localUpperBound.trim() === '') {
         throw new Error('Both lower and upper bounds are required');
       }
       
       // Get the selected key-value pair
-      const { key, value } = pod.data[selectedKeyIndex];
+      const { key, value } = localPod.data[localSelectedKeyIndex];
       
       // Get the proof data from the merkle service
-      const proofData = merkleService.getProof(selectedKeyIndex);
+      const proofData = merkleService.getProof(localSelectedKeyIndex);
       
       // Create the proof request
       const proofRequest = {
@@ -99,19 +97,19 @@ function ProofGenerator() {
         value,
         index: proofData.index,
         siblings: proofData.siblings,
-        root: pod.merkleRoot,
-        lowerbound: lowerBound,
-        upperbound: upperBound,
-        signedRoot_R8: pod.signature.R8,
-        signedRoot_S: pod.signature.S,
-        pubKey: pod.publicKey
+        root: localPod.merkleRoot,
+        lowerbound: localLowerBound,
+        upperbound: localUpperBound,
+        signedRoot_R8: localPod.signature.R8,
+        signedRoot_S: localPod.signature.S,
+        pubKey: localPod.publicKey
       };
       
       // Generate the proof
       const generatedProof = await proofService.generateProof(proofRequest);
       
       // Set the proof
-      setProof(generatedProof);
+      setLocalProof(generatedProof);
       setSuccess('Proof generated successfully');
       setTimeout(() => setSuccess(''), 3000);
     } catch (err) {
@@ -126,11 +124,8 @@ function ProofGenerator() {
    */
   const copyProof = () => {
     try {
-      const proofJson = proofService.exportProof(proof);
+      const proofJson = proofService.exportProof(localProof);
       navigator.clipboard.writeText(proofJson);
-      
-      // Also transfer the proof to the verifier for convenience
-      transferProofToVerifier(proof);
       
       setSuccess('Proof copied to clipboard and ready for verification');
       setTimeout(() => setSuccess(''), 3000);
@@ -142,11 +137,8 @@ function ProofGenerator() {
   /**
    * Handle changes to the POD input
    */
-  const handlePodInputChange = (e) => {
-    setPodInput(e.target.value);
-    setPod(null);
-    setSelectedKeyIndex(-1);
-    setProof(null);
+  const handleDirectPodInputChange = (e) => {
+    setDirectPodInput(e.target.value);
   };
   
   /**
@@ -177,8 +169,8 @@ function ProofGenerator() {
             POD JSON
           </label>
           <textarea
-            value={podInput}
-            onChange={handlePodInputChange}
+            value={directPodInput}
+            onChange={handleDirectPodInputChange}
             placeholder="Paste your POD JSON here"
             rows={20}
             className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 h-40 font-mono"
@@ -194,7 +186,7 @@ function ProofGenerator() {
       </div>
       
       {/* Key Selection Section */}
-      {pod && (
+      {localPod && (
         <div className="bg-white shadow-md rounded p-6 mb-6">
           <h2 className="text-xl font-semibold mb-4">Select Key-Value Pair</h2>
           
@@ -203,12 +195,12 @@ function ProofGenerator() {
               Key-Value Pair
             </label>
             <select
-              value={selectedKeyIndex}
-              onChange={(e) => setSelectedKeyIndex(Number(e.target.value))}
+              value={localSelectedKeyIndex}
+              onChange={(e) => setLocalSelectedKeyIndex(Number(e.target.value))}
               className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value={-1}>Select a key-value pair</option>
-              {pod.data.map((item, index) => (
+              {localPod.data.map((item, index) => (
                 <option key={index} value={index}>
                   Key: {item.key} - Value: {item.value}
                 </option>
@@ -223,8 +215,8 @@ function ProofGenerator() {
               </label>
               <input
                 type="number"
-                value={lowerBound}
-                onChange={(e) => setLowerBound(e.target.value)}
+                value={localLowerBound}
+                onChange={(e) => setLocalLowerBound(e.target.value)}
                 placeholder="e.g., 0"
                 className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
@@ -235,8 +227,8 @@ function ProofGenerator() {
               </label>
               <input
                 type="number"
-                value={upperBound}
-                onChange={(e) => setUpperBound(e.target.value)}
+                value={localUpperBound}
+                onChange={(e) => setLocalUpperBound(e.target.value)}
                 placeholder="e.g., 100"
                 className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
@@ -245,9 +237,9 @@ function ProofGenerator() {
           
           <button
             onClick={generateProof}
-            disabled={selectedKeyIndex === -1 || isGeneratingProof}
+            disabled={localSelectedKeyIndex === -1 || isGeneratingProof}
             className={`px-6 py-3 rounded-lg text-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-              selectedKeyIndex === -1 || isGeneratingProof
+              localSelectedKeyIndex === -1 || isGeneratingProof
                 ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
                 : 'bg-blue-500 text-white hover:bg-blue-600'
             }`}
@@ -271,7 +263,7 @@ function ProofGenerator() {
       )}
       
       {/* Proof Output */}
-      {proof && (
+      {localProof && (
         <div className="bg-white shadow-md rounded p-6">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-xl font-semibold">Generated Proof</h2>
@@ -283,7 +275,7 @@ function ProofGenerator() {
             </button>
           </div>
           <pre className="bg-gray-100 p-4 rounded overflow-auto text-sm font-mono max-h-96">
-            {JSON.stringify(formatProofForDisplay(proof), null, 2)}
+            {JSON.stringify(formatProofForDisplay(localProof), null, 2)}
           </pre>
         </div>
       )}

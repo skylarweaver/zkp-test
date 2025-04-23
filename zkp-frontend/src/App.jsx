@@ -5,7 +5,7 @@ import PODCreator from './components/PODCreator'
 import ProofGenerator from './components/ProofGenerator'
 import ProofVerifier from './components/ProofVerifier'
 import CircuitLoader from './services/circuitLoader'
-import { AppContextProvider, useAppContext } from './contexts/AppContext'
+import { AppContextProvider } from './contexts/AppContext'
 
 // Create the navigation context
 const AppNavigationContext = createContext();
@@ -13,61 +13,6 @@ const AppNavigationContext = createContext();
 // Helper hook to access navigation context
 function useAppNavigationContext() {
   return useContext(AppNavigationContext);
-}
-
-// Component that holds the workflow navigation
-function WorkflowNavigation() {
-  const { 
-    podState, 
-    proofState, 
-    transferPodToProofGenerator, 
-    transferProofToVerifier 
-  } = useAppContext();
-  const { activePage, setActivePage } = useAppNavigationContext();
-  
-  const navigateToProofGenerator = () => {
-    if (podState.pod) {
-      transferPodToProofGenerator();
-      setActivePage('proof-generator');
-    }
-  };
-  
-  const navigateToProofVerifier = () => {
-    if (proofState.proof) {
-      transferProofToVerifier(proofState.proof);
-      setActivePage('proof-verifier');
-    }
-  };
-  
-  const buttonStyles = "py-2 px-4 bg-indigo-600 text-white rounded shadow-md hover:bg-indigo-700";
-  
-  if (activePage === 'pod-creator' && podState.pod) {
-    return (
-      <div className="fixed bottom-6 right-6">
-        <button 
-          className={buttonStyles}
-          onClick={navigateToProofGenerator}
-        >
-          Continue to Create Proof →
-        </button>
-      </div>
-    );
-  }
-  
-  if (activePage === 'proof-generator' && proofState.proof) {
-    return (
-      <div className="fixed bottom-6 right-6">
-        <button 
-          className={buttonStyles}
-          onClick={navigateToProofVerifier}
-        >
-          Continue to Verify Proof →
-        </button>
-      </div>
-    );
-  }
-  
-  return null;
 }
 
 // Main app component
@@ -155,7 +100,6 @@ function App() {
         <div className="min-h-screen bg-gray-100">
           <Navigation activePage={activePage} setActivePage={setActivePage} />
           {renderActivePage()}
-          <WorkflowNavigation />
         </div>
       </AppNavigationContext.Provider>
     </AppContextProvider>

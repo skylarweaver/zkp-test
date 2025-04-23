@@ -17,13 +17,11 @@ function ProofVerifier() {
   const [isVerifying, setIsVerifying] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [localProofInput, setLocalProofInput] = useState('');
+  const [localVerificationResult, setLocalVerificationResult] = useState(null);
   
-  // Destructure values from context state for easier access
+  // Destructure values from context state for easier access (only used for initialization now)
   const { proofInput, verificationResult } = verifierState;
-  
-  // Helper functions to update individual properties
-  const setProofInput = (input) => updateVerifierState({ proofInput: input });
-  const setVerificationResult = (result) => updateVerifierState({ verificationResult: result });
   
   /**
    * Verify a proof from JSON input
@@ -31,15 +29,15 @@ function ProofVerifier() {
   const verifyProof = async () => {
     try {
       setError('');
-      setVerificationResult(null);
+      setLocalVerificationResult(null);
       setIsVerifying(true);
       
-      if (!proofInput.trim()) {
+      if (!localProofInput.trim()) {
         throw new Error('Proof input is required');
       }
       
       // Parse the proof
-      const proofData = proofService.importProof(proofInput);
+      const proofData = proofService.importProof(localProofInput);
       
       // Validate the proof data
       if (!proofData.proof || !proofData.publicSignals) {
@@ -53,11 +51,13 @@ function ProofVerifier() {
       );
       
       // Set the verification result
-      setVerificationResult({
+      const result = {
         isValid,
         timestamp: new Date().toISOString(),
         meta: proofData.meta || {}
-      });
+      };
+      
+      setLocalVerificationResult(result);
       
       if (isValid) {
         setSuccess('Proof verified successfully');
@@ -80,8 +80,8 @@ function ProofVerifier() {
    * Handle changes to the proof input
    */
   const handleProofInputChange = (e) => {
-    setProofInput(e.target.value);
-    setVerificationResult(null);
+    setLocalProofInput(e.target.value);
+    setLocalVerificationResult(null);
   };
   
   return (
@@ -97,7 +97,7 @@ function ProofVerifier() {
             Proof JSON
           </label>
           <textarea
-            value={proofInput}
+            value={localProofInput}
             onChange={handleProofInputChange}
             placeholder="Paste your proof JSON here"
             rows={20}
@@ -132,51 +132,51 @@ function ProofVerifier() {
       )}
       
       {/* Verification Result */}
-      {verificationResult && (
+      {localVerificationResult && (
         <div className="bg-white shadow-md rounded p-6">
           <h2 className="text-xl font-semibold mb-4">Verification Result</h2>
           
           <div className="mb-6">
-            <div className={`p-4 rounded flex items-center ${
-              verificationResult.isValid
+            <div className={`p-4 rounded items-center ${
+              localVerificationResult.isValid
                 ? 'bg-green-100 text-green-800'
                 : 'bg-red-100 text-red-800'
             }`}>
-              <div className={`w-10 h-10 rounded-full flex items-center justify-center mr-4 ${
-                verificationResult.isValid
+              <div className={`w-10 h-10 rounded-full items-center justify-center mr-4 ${
+                localVerificationResult.isValid
                   ? 'bg-green-500 text-white'
                   : 'bg-red-500 text-white'
               }`}>
-                {verificationResult.isValid ? '✓' : '✗'}
+                {localVerificationResult.isValid ? '✓' : '✗'}
               </div>
               <div>
                 <h3 className="font-bold text-lg">
-                  {verificationResult.isValid ? 'Valid Proof' : 'Invalid Proof'}
+                  {localVerificationResult.isValid ? 'Valid Proof' : 'Invalid Proof'}
                 </h3>
                 <p>
-                  Verification completed at {new Date(verificationResult.timestamp).toLocaleString()}
+                  Verification completed at {new Date(localVerificationResult.timestamp).toLocaleString()}
                 </p>
               </div>
             </div>
           </div>
           
-          {verificationResult.meta && (
+          {localVerificationResult.meta && (
             <div>
               <h3 className="font-semibold text-gray-700 mb-2">Proof Metadata</h3>
               <div className="bg-gray-100 p-4 rounded mb-4">
-                {verificationResult.meta.description && (
+                {localVerificationResult.meta.description && (
                   <p className="mb-2">
-                    <span className="font-medium">Description:</span> {verificationResult.meta.description}
+                    <span className="font-medium">Description:</span> {localVerificationResult.meta.description}
                   </p>
                 )}
-                {verificationResult.meta.timestamp && (
+                {localVerificationResult.meta.timestamp && (
                   <p>
-                    <span className="font-medium">Created:</span> {new Date(verificationResult.meta.timestamp).toLocaleString()}
+                    <span className="font-medium">Created:</span> {new Date(localVerificationResult.meta.timestamp).toLocaleString()}
                   </p>
                 )}
               </div>
               
-              {verificationResult.meta.publicInputs && (
+              {localVerificationResult.meta.publicInputs && (
                 <div>
                   <h3 className="font-semibold text-gray-700 mb-2">Public Inputs</h3>
                   <div className="bg-blue-50 p-4 rounded border border-blue-200">
@@ -185,19 +185,19 @@ function ProofVerifier() {
                       <div>
                         <p className="mb-2">
                           <span className="font-medium">Key:</span>
-                          <span className="block truncate text-sm font-mono">{verificationResult.meta.publicInputs.key}</span>
+                          <span className="block truncate text-sm font-mono">{localVerificationResult.meta.publicInputs.key}</span>
                         </p>
                         <p className="mb-2">
-                          <span className="font-medium">Lower Bound:</span> {verificationResult.meta.publicInputs.lowerBound}
+                          <span className="font-medium">Lower Bound:</span> {localVerificationResult.meta.publicInputs.lowerBound}
                         </p>
                         <p className="mb-2">
-                          <span className="font-medium">Upper Bound:</span> {verificationResult.meta.publicInputs.upperBound}
+                          <span className="font-medium">Upper Bound:</span> {localVerificationResult.meta.publicInputs.upperBound}
                         </p>
                       </div>
                       <div>
                         <p className="mb-2">
                           <span className="font-medium">Public Key:</span>
-                          <span className="block truncate text-sm font-mono">[{verificationResult.meta.publicInputs.pubKey?.[0]?.toString().substring(0, 8)}..., {verificationResult.meta.publicInputs.pubKey?.[1]?.toString().substring(0, 8)}...]</span>
+                          <span className="block truncate text-sm font-mono">[{localVerificationResult.meta.publicInputs.pubKey?.[0]?.toString().substring(0, 8)}..., {localVerificationResult.meta.publicInputs.pubKey?.[1]?.toString().substring(0, 8)}...]</span>
                         </p>
                       </div>
                     </div>
